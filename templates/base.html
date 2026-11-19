@@ -1,0 +1,55 @@
+{% from "_macros.html" import icono %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Panel{% endblock %} · SGV</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+  <script src="{{ url_for('static', filename='vendor/chart.umd.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body class="bg-slate-100 text-slate-800">
+{% set menu = [
+  ("panel", "panel", "Dashboard", True),
+  ("activos", "activos", "Activos", puede("activos_ver")),
+  ("vulns", "vuln", "Vulnerabilidades", True),
+  ("auditoria", "audit", "Auditoría", puede("auditoria")),
+  ("usuarios", "usuarios", "Usuarios y permisos", puede("usuarios")),
+] %}
+<div class="min-h-screen lg:flex">
+  <aside id="barra" class="barra-lateral" aria-label="Menú principal">
+    <div class="flex items-center gap-2 px-5 py-5">
+      <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-500 text-white">{{ icono("escudo") }}</span>
+      <div class="leading-tight"><p class="text-sm font-semibold text-white">SGV</p><p class="text-xs text-slate-400">Gestión de vulnerabilidades</p></div>
+    </div>
+    <nav class="flex-1 space-y-0.5 px-3">
+      {% for ep, ic, nombre, ver in menu if ver %}
+        <a href="{{ url_for(ep) }}" class="enlace-menu {{ 'activo' if request.endpoint and (request.endpoint == ep or request.endpoint.startswith(ep[:4])) }}">{{ icono(ic) }}<span>{{ nombre }}</span></a>
+      {% endfor %}
+    </nav>
+    <div class="border-t border-slate-700 p-3">
+      <a href="{{ url_for('perfil') }}" class="enlace-menu">{{ icono("perfil") }}<span>Mi perfil</span></a>
+      <form method="post" action="{{ url_for('salir') }}"><input type="hidden" name="csrf" value="{{ csrf }}">
+        <button class="enlace-menu w-full text-left">{{ icono("salir") }}<span>Cerrar sesión</span></button></form>
+    </div>
+  </aside>
+  <div id="fondo-menu" class="fixed inset-0 z-30 hidden bg-slate-900/50 lg:hidden"></div>
+  <div class="flex min-w-0 flex-1 flex-col">
+    <header class="sticky top-0 z-20 flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
+      <button id="abrir-menu" class="rounded-md p-2 text-slate-600 hover:bg-slate-100 lg:hidden" aria-label="Abrir menú">{{ icono("menu") }}</button>
+      <p class="hidden truncate text-sm text-slate-500 sm:block">{{ EMPRESA }}</p>
+      <div class="ml-auto text-right leading-tight"><p class="text-sm font-medium">{{ usuario.nombre }}</p><p class="text-xs text-slate-500">{{ ROLES[usuario.rol] }}</p></div>
+    </header>
+    <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
+      {% if MODO_LOCAL %}<p class="mb-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">Modo local de estudio: los datos se guardan en un archivo del equipo, no en Firebase.</p>{% endif %}
+      {% for categoria, msg in get_flashed_messages(with_categories=true) %}
+        <div class="aviso {{ 'aviso-ok' if categoria == 'ok' else 'aviso-error' }}" role="{{ 'status' if categoria == 'ok' else 'alert' }}">{{ msg }}</div>
+      {% endfor %}
+      {% block contenido %}{% endblock %}
+    </main>
+  </div>
+</div>
+</body>
+</html>

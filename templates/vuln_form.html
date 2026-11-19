@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo, seleccion %}
+{% block titulo %}{{ 'Editar' if editar else 'Registrar' }} vulnerabilidad{% endblock %}
+{% block contenido %}
+<h1 class="titulo-pagina">{{ 'Editar vulnerabilidad' if editar else 'Registrar vulnerabilidad' }}</h1>
+<p class="mb-4 max-w-3xl text-sm text-slate-600">Registra una vulnerabilidad <strong>ya identificada</strong> por personal autorizado. El sistema no escanea ni explota equipos.</p>
+<form method="post" class="tarjeta max-w-3xl space-y-4" data-valida>
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  {{ campo("titulo", "Título", v.titulo, requerido=True, extra='maxlength="150"') }}
+  <div><label class="etiqueta-campo" for="descripcion">Descripción <span class="text-red-600" aria-hidden="true">*</span></label>
+    <textarea class="campo" id="descripcion" name="descripcion" rows="4" required maxlength="2000">{{ v.descripcion or '' }}</textarea></div>
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div class="sm:col-span-2"><label class="etiqueta-campo" for="id_activo">Activo afectado</label>
+      <select class="campo" id="id_activo" name="id_activo"><option value="">— Sin activo (registro temporal) —</option>
+        {% for a in activos %}<option value="{{ a.id }}" {{ 'selected' if a.id == v.id_activo }}>{{ a.nombre }} ({{ a.tipo }})</option>{% endfor %}</select></div>
+    {{ campo("justificacion", "Justificación si no eliges activo", v.justificacion, ayuda="Solo si no hay activo: explica por qué queda pendiente de asociar.", extra='maxlength="500"') }}
+    {{ seleccion("tipo", "Tipo de vulnerabilidad", tipos, v.tipo, True, "Elige…") }}
+    {{ seleccion("fuente", "Fuente", fuentes, v.fuente, True, "Elige…") }}
+    {{ campo("fecha_deteccion", "Fecha de detección", v.fecha_deteccion, "date", True) }}
+    {{ seleccion("severidad", "Severidad", niveles, v.severidad, True) }}
+    {{ campo("cve", "CVE (opcional)", v.cve, ayuda="Formato CVE-2024-12345", extra='maxlength="30"') }}
+    {{ campo("cvss", "CVSS (opcional)", v.cvss, "number", ayuda="De 0 a 10. Solo es referencia técnica.", extra='min="0" max="10" step="0.1"') }}
+  </div>
+  <div class="flex gap-3 border-t border-slate-100 pt-4"><button class="btn btn-primario" type="submit">Guardar</button>
+    <a class="btn btn-secundario" href="{{ url_for('vuln_detalle', vid=vid) if editar else url_for('vulns') }}">Cancelar</a></div>
+</form>
+{% endblock %}

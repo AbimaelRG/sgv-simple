@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "_macros.html" import nivel, estado, vacio %}
+{% block titulo %}Dashboard{% endblock %}
+{% block contenido %}
+<h1 class="titulo-pagina">Dashboard</h1>
+<section aria-label="Indicadores" class="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-5">
+  {% for nombre, valor in ind.items() %}
+    <div class="tarjeta-dato {{ 'tono-rojo' if nombre in ('Críticas abiertas', 'Vencidas') else 'tono-ambar' if nombre in ('Prioridad alta', 'Próximas a vencer') else 'tono-verde' if nombre in ('Resueltas', 'Cerradas') }}">
+      <p class="text-2xl font-semibold">{{ valor }}</p><p class="text-xs text-slate-500">{{ nombre }}</p></div>
+  {% endfor %}
+</section>
+
+{% if hay_datos %}
+<section class="mt-6 grid gap-4 lg:grid-cols-2" aria-label="Gráficas">
+  <div class="tarjeta"><h2 class="subtitulo">Por severidad</h2><div class="alto-grafica"><canvas data-grafica="dona" data-datos='{{ graficas.severidad|tojson }}' role="img" aria-label="Vulnerabilidades por severidad"></canvas></div></div>
+  <div class="tarjeta"><h2 class="subtitulo">Por estado</h2><div class="alto-grafica"><canvas data-grafica="barras" data-datos='{{ graficas.estado|tojson }}' role="img" aria-label="Vulnerabilidades por estado"></canvas></div></div>
+  <div class="tarjeta"><h2 class="subtitulo">Por tipo de activo</h2><div class="alto-grafica"><canvas data-grafica="barras-h" data-datos='{{ graficas.tipo|tojson }}' role="img" aria-label="Vulnerabilidades por tipo de activo"></canvas></div></div>
+  <div class="tarjeta"><h2 class="subtitulo">Abiertas por responsable</h2><div class="alto-grafica"><canvas data-grafica="barras-h" data-datos='{{ graficas.responsable|tojson }}' role="img" aria-label="Vulnerabilidades abiertas por responsable"></canvas></div></div>
+</section>
+{% endif %}
+
+<section class="mt-6 grid gap-4 lg:grid-cols-3">
+  <div class="tarjeta p-0 lg:col-span-2">
+    <h2 class="subtitulo px-5 pt-4">Casos que requieren atención</h2>
+    {% if urgentes %}
+    <div class="tabla-contenedor"><table class="tabla"><thead><tr><th>Caso</th><th>Activo</th><th>Prioridad</th><th>Estado</th></tr></thead><tbody>
+      {% for v in urgentes %}<tr><td><a class="enlace" href="{{ url_for('vuln_detalle', vid=v.id) }}">{{ v.titulo }}</a></td><td>{{ v.activo_nombre }}</td><td>{{ nivel(v.prioridad or v.severidad) }}</td><td>{{ estado(v.estado) }}</td></tr>{% endfor %}
+    </tbody></table></div>
+    {% else %}{{ vacio("No hay casos abiertos.") }}{% endif %}
+  </div>
+  <div class="tarjeta p-0">
+    <h2 class="subtitulo px-5 pt-4">Alertas</h2>
+    {% if alertas %}<ul class="divide-y divide-slate-100">
+      {% for tipo, v in alertas[:8] %}<li class="px-5 py-3 text-sm"><p class="font-medium">{{ tipo }}</p><a class="enlace" href="{{ url_for('vuln_detalle', vid=v.id) }}">{{ v.titulo }}</a></li>{% endfor %}
+    </ul>{% else %}{{ vacio("Sin alertas.") }}{% endif %}
+  </div>
+</section>
+{% endblock %}

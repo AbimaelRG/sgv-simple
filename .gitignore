@@ -1,0 +1,9 @@
+.env
+*.key
+serviceAccount*.json
+datos_local.json
+archivos_local/
+__pycache__/
+.pytest_cache/
+.venv/
+clave-firebase.json

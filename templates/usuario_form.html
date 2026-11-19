@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo, seleccion %}
+{% block titulo %}{{ 'Editar' if editar else 'Nuevo' }} usuario{% endblock %}
+{% block contenido %}
+<h1 class="titulo-pagina">{{ 'Editar usuario' if editar else 'Nuevo usuario' }}</h1>
+<form method="post" class="tarjeta max-w-2xl space-y-4" data-valida autocomplete="off">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <div class="grid gap-4 sm:grid-cols-2">
+    {{ campo("nombre", "Nombre completo", u.nombre, requerido=True) }}
+    {% if editar %}<div><span class="etiqueta-campo">Correo</span><p class="campo bg-slate-50 text-slate-600">{{ u.correo }}</p></div>
+    {% else %}{{ campo("correo", "Correo electrónico", u.correo, "email", True) }}{% endif %}
+    {{ campo("departamento", "Departamento", u.departamento) }}
+    {{ seleccion("rol", "Rol", ROLES.items()|list, u.rol, True) }}
+    {% if editar %}{{ seleccion("estado", "Estado de la cuenta", ["Activo", "Inactivo"], u.estado) }}{% endif %}
+    {{ campo("clave", "Nueva contraseña" if editar else "Contraseña inicial", "", "password", not editar, ayuda=("Déjala vacía para no cambiarla. " if editar else "") ~ "Mínimo 8 caracteres.", extra='minlength="8" autocomplete="new-password"') }}
+  </div>
+  <div class="flex gap-3 border-t border-slate-100 pt-4"><button class="btn btn-primario" type="submit">Guardar</button><a class="btn btn-secundario" href="{{ url_for('usuarios') }}">Cancelar</a></div>
+</form>
+{% endblock %}

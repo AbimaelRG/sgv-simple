@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo, seleccion %}
+{% block titulo %}{{ 'Editar' if editar else 'Nuevo' }} activo{% endblock %}
+{% block contenido %}
+<h1 class="titulo-pagina">{{ 'Editar activo' if editar else 'Nuevo activo' }}</h1>
+<form method="post" class="tarjeta max-w-3xl space-y-4" data-valida>
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <div class="grid gap-4 sm:grid-cols-2">
+    {{ campo("nombre", "Nombre del activo", a.nombre, requerido=True, extra='maxlength="120"') }}
+    {{ seleccion("tipo", "Tipo de activo", tipos, a.tipo, True, "Elige…") }}
+    {{ campo("marca", "Marca", a.marca) }}
+    {{ campo("modelo", "Modelo", a.modelo) }}
+    {{ campo("serie", "Número de serie", a.serie, ayuda="Opcional: una aplicación puede no tenerlo.") }}
+    {{ campo("sistema", "Sistema operativo", a.sistema) }}
+    {{ campo("ip", "Dirección IP", a.ip, ayuda="Opcional. Ejemplo: 192.168.1.10") }}
+    {{ campo("ubicacion", "Ubicación", a.ubicacion) }}
+    {{ campo("responsable", "Responsable", a.responsable) }}
+    {{ seleccion("criticidad", "Criticidad", niveles, a.criticidad, True) }}
+    {% if editar %}{{ seleccion("estado", "Estado", ["Activo", "Inactivo"], a.estado) }}{% endif %}
+  </div>
+  <div class="flex gap-3 border-t border-slate-100 pt-4"><button class="btn btn-primario" type="submit">Guardar</button><a class="btn btn-secundario" href="{{ url_for('activos') }}">Cancelar</a></div>
+</form>
+{% endblock %}

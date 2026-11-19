@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% from "_macros.html" import nivel, estado %}
+{% block titulo %}{{ v.titulo }}{% endblock %}
+{% block contenido %}
+<div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+  <div class="min-w-0">
+    <p class="text-xs text-slate-500"><a class="enlace" href="{{ url_for('vulns') }}">Vulnerabilidades</a> / {{ v.id }}</p>
+    <h1 class="titulo-pagina mb-1">{{ v.titulo }}</h1>
+    <div class="flex flex-wrap items-center gap-2">{{ estado(v.estado) }} {{ nivel(v.severidad) }}
+      {% if v.prioridad %}<span class="text-xs text-slate-500">Prioridad:</span>{{ nivel(v.prioridad) }}{% endif %}
+      {% if v.alerta %}<span class="etiqueta {{ 'estado-rojo' if v.alerta == 'vencida' else 'estado-ambar' }}">{{ v.alerta }}</span>{% endif %}</div>
+  </div>
+  {% if puede("registrar") and v.estado != "Cerrada" %}<a class="btn btn-secundario" href="{{ url_for('vuln_editar', vid=v.id) }}">Editar datos</a>{% endif %}
+</div>
+
+<div class="grid gap-4 lg:grid-cols-3">
+  <div class="space-y-4 lg:col-span-2">
+    <section class="tarjeta"><h2 class="subtitulo">Información</h2>
+      <p class="mb-4 whitespace-pre-line text-sm">{{ v.descripcion }}</p>
+      <dl class="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
+        <div><dt class="dt">Tipo</dt><dd>{{ v.tipo }}</dd></div><div><dt class="dt">Fuente</dt><dd>{{ v.fuente }}</dd></div>
+        <div><dt class="dt">Detección</dt><dd>{{ v.fecha_deteccion|fecha }}</dd></div>
+        <div><dt class="dt">CVE</dt><dd>{{ v.cve or '—' }}</dd></div><div><dt class="dt">CVSS (referencia)</dt><dd>{{ v.cvss if v.cvss is not none else '—' }}</dd></div>
+        <div><dt class="dt">Registrado por</dt><dd>{{ v.registrado_por }}</dd></div>
+        <div><dt class="dt">Responsable</dt><dd>{{ v.tecnico_nombre or '—' }}</dd></div><div><dt class="dt">Fecha límite</dt><dd>{{ v.fecha_limite|fecha if v.fecha_limite else '—' }}</dd></div>
+      </dl>
+      {% if v.justificacion and not activo %}<p class="mt-4 rounded bg-amber-50 p-2 text-xs text-amber-900">Registro temporal sin activo: {{ v.justificacion }}</p>{% endif %}
+    </section>
+
+    <section class="tarjeta"><h2 class="subtitulo">Activo afectado</h2>
+      {% if activo %}<dl class="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
+        <div><dt class="dt">Nombre</dt><dd>{{ activo.nombre }}</dd></div><div><dt class="dt">Tipo</dt><dd>{{ activo.tipo }}</dd></div>
+        <div><dt class="dt">Criticidad</dt><dd>{{ nivel(activo.criticidad) }}</dd></div><div><dt class="dt">Sistema operativo</dt><dd>{{ activo.sistema or '—' }}</dd></div>
+        <div><dt class="dt">IP</dt><dd>{{ activo.ip or '—' }}</dd></div><div><dt class="dt">Ubicación</dt><dd>{{ activo.ubicacion or '—' }}</dd></div></dl>
+      {% else %}<p class="text-sm text-slate-500">Sin activo asociado.</p>{% endif %}
+    </section>
+
+    {% if evaluacion %}<section class="tarjeta"><h2 class="subtitulo">Evaluación de riesgo</h2>
+      <dl class="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-4">
+        <div><dt class="dt">Impacto empresarial</dt><dd>{{ evaluacion.impacto_empresarial }}</dd></div><div><dt class="dt">Probabilidad</dt><dd>{{ evaluacion.probabilidad }}</dd></div>
+        <div><dt class="dt">Puntaje sugerido</dt><dd>{{ evaluacion.puntaje }} → {{ evaluacion.prioridad_sugerida }}</dd></div><div><dt class="dt">Prioridad definida</dt><dd>{{ nivel(evaluacion.prioridad) }}</dd></div></dl>
+      {% if evaluacion.justificacion %}<p class="mt-3 text-sm"><span class="dt">Justificación</span><br>{{ evaluacion.justificacion }}</p>{% endif %}
+    </section>{% endif %}
+
+    <section class="tarjeta"><h2 class="subtitulo">Evidencias</h2>
+      {% for e in evidencias %}<p class="border-b border-slate-100 py-2 text-sm last:border-0"><a class="enlace font-medium" href="{{ url_for('evidencia_ver', eid=e.id) }}">{{ e.nombre }}</a>
+        <span class="text-xs text-slate-500"> · {{ (e.tamano / 1024)|round(1) }} KB · {{ e.subido_por }} · {{ e.fecha|fecha_hora }}</span></p>
+      {% else %}<p class="text-sm text-slate-500">Sin evidencias adjuntas.</p>{% endfor %}
+      {% if puede_adjuntar %}
+      <form method="post" action="{{ url_for('evidencia_subir', vid=v.id) }}" enctype="multipart/form-data" class="mt-4 flex flex-wrap items-end gap-3 border-t border-slate-100 pt-4">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <div class="min-w-48 flex-1"><label class="etiqueta-campo" for="archivo">Archivo (máx. 5 MB)</label><input class="campo" id="archivo" name="archivo" type="file" required></div>
+        <button class="btn btn-secundario" type="submit">Adjuntar</button></form>{% endif %}
+    </section>
+
+    <section class="tarjeta"><h2 class="subtitulo">Historial</h2>
+      <ol class="relative space-y-4 border-l border-slate-200 pl-5 text-sm">
+        {% for s in historial %}<li><span class="absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border-2 border-white bg-teal-500"></span>
+          <p class="font-medium">{{ s.actividad }}</p>{% if s.observaciones %}<p class="text-slate-600">{{ s.observaciones }}</p>{% endif %}
+          <p class="text-xs text-slate-400">{{ s.usuario }} · {{ s.fecha|fecha_hora }}{% if s.estado %} · {{ s.estado }}{% endif %}</p></li>{% endfor %}
+      </ol>
+    </section>
+  </div>
+
+  <aside class="space-y-3">
+    <section class="tarjeta" aria-label="Acciones"><h2 class="subtitulo">Acciones</h2>
+      {% if acciones %}<div class="space-y-2">
+      {% for a in acciones %}
+        <details class="rounded-md border border-slate-200">
+          <summary class="cursor-pointer select-none px-3 py-2 text-sm font-medium hover:bg-slate-50">{{ ACCIONES[a][3] }}</summary>
+          <form method="post" action="{{ url_for('vuln_accion', vid=v.id, accion=a) }}" class="space-y-3 border-t border-slate-100 p-3"
+                {% if a in ('cerrar','aprobar','rechazar','reabrir') %}data-confirma="¿Confirmas: {{ ACCIONES[a][3]|lower }}?"{% endif %}>
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            {% if a == 'validar' %}<p class="text-xs text-slate-600">Se revisa que el registro esté completo y no sea un duplicado.</p>{% endif %}
+            {% if a == 'clasificar' %}
+              <div><label class="etiqueta-campo" for="imp">Impacto empresarial</label><select class="campo" id="imp" name="impacto">{% for n in niveles %}<option {{ 'selected' if n == 'Media' }}>{{ n }}</option>{% endfor %}</select></div>
+              <div><label class="etiqueta-campo" for="prob">Probabilidad</label><select class="campo" id="prob" name="probabilidad">{% for n in probabilidades %}<option {{ 'selected' if n == 'Media' }}>{{ n }}</option>{% endfor %}</select></div>
+              <p class="ayuda">Prioridad sugerida = (severidad + criticidad del activo + impacto) × probabilidad.</p>{% endif %}
+            {% if a == 'priorizar' %}
+              {% if evaluacion %}<p class="rounded bg-teal-50 p-2 text-xs text-teal-900">Sugerencia: <strong>{{ evaluacion.prioridad_sugerida }}</strong> (puntaje {{ evaluacion.puntaje }})</p>{% endif %}
+              <div><label class="etiqueta-campo" for="pri">Prioridad</label><select class="campo" id="pri" name="prioridad">{% for n in niveles %}<option {{ 'selected' if evaluacion and n == evaluacion.prioridad_sugerida }}>{{ n }}</option>{% endfor %}</select></div>
+              <div><label class="etiqueta-campo" for="jus">Justificación</label><textarea class="campo" id="jus" name="justificacion" rows="2" required minlength="10"></textarea></div>{% endif %}
+            {% if a == 'asignar' %}
+              <div><label class="etiqueta-campo" for="tec">Técnico</label><select class="campo" id="tec" name="id_tecnico" required><option value="">Elige…</option>{% for t in tecnicos %}<option value="{{ t.id }}">{{ t.nombre }}</option>{% endfor %}</select></div>
+              <div><label class="etiqueta-campo" for="lim">Fecha límite</label><input class="campo" id="lim" name="fecha_limite" type="date" min="{{ hoy }}" required></div>{% endif %}
+            {% if a in ('avance','pedir_verificacion') %}
+              <div><label class="etiqueta-campo" for="act">{{ 'Actividad realizada' if a == 'avance' else 'Corrección realizada' }}</label><textarea class="campo" id="act" name="actividad" rows="3" required minlength="5"></textarea></div>{% endif %}
+            {% if a == 'pedir_verificacion' %}<div><label class="etiqueta-campo" for="evi">Evidencia de la solución</label><input class="campo" id="evi" name="evidencia" required placeholder="Texto o enlace"></div>{% endif %}
+            {% if a not in ('pedir_verificacion', 'priorizar') %}
+            <div><label class="etiqueta-campo" for="obs-{{ a }}">Observaciones{% if a in ('rechazar','reabrir') %} (obligatorias){% endif %}</label><textarea class="campo" id="obs-{{ a }}" name="observaciones" rows="2" {{ 'required' if a in ('rechazar','reabrir') }}></textarea></div>{% endif %}
+            <button class="btn btn-primario w-full" type="submit">{{ ACCIONES[a][3] }}</button>
+          </form>
+        </details>
+      {% endfor %}</div>
+      {% else %}<p class="text-sm text-slate-500">No hay acciones disponibles para tu rol en este estado.</p>{% endif %}
+    </section>
+    <section class="tarjeta text-sm"><h2 class="subtitulo">Asignaciones</h2>
+      {% for a in asignaciones %}<p class="border-b border-slate-100 py-1.5 last:border-0">{{ a.tecnico }} · límite {{ a.fecha_limite|fecha }} {{ estado(a.estado) }}</p>{% else %}<p class="text-slate-500">Aún sin asignar.</p>{% endfor %}</section>
+    <section class="tarjeta text-sm"><h2 class="subtitulo">Verificaciones</h2>
+      {% for x in verificaciones %}<p class="border-b border-slate-100 py-1.5 last:border-0">{{ estado(x.resultado) }} · {{ x.verificado_por }} · {{ x.fecha|fecha }}</p>{% else %}<p class="text-slate-500">Sin verificaciones.</p>{% endfor %}</section>
+  </aside>
+</div>
+{% endblock %}

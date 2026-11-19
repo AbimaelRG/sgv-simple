@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_macros.html" import estado, vacio, icono %}
+{% block titulo %}Usuarios{% endblock %}
+{% block contenido %}
+<div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+  <h1 class="titulo-pagina mb-0">Usuarios y permisos</h1>
+  <a class="btn btn-primario" href="{{ url_for('usuario_nuevo') }}">{{ icono("mas", "h-4 w-4") }}Nuevo usuario</a>
+</div>
+<div class="tarjeta p-0"><div class="tabla-contenedor"><table class="tabla">
+  <thead><tr><th>Nombre</th><th>Correo</th><th>Departamento</th><th>Rol</th><th>Estado</th><th>Último acceso</th><th></th></tr></thead>
+  <tbody>{% for u in lista %}<tr><td class="font-medium">{{ u.nombre }}</td><td>{{ u.correo }}</td><td>{{ u.departamento or '—' }}</td><td>{{ ROLES[u.rol] }}</td><td>{{ estado(u.estado) }}</td>
+    <td>{{ u.ultimo_acceso|fecha_hora if u.ultimo_acceso else 'Nunca' }}</td><td><a class="enlace" href="{{ url_for('usuario_editar', uid=u.id) }}">Editar</a></td></tr>{% endfor %}</tbody></table></div></div>
+
+<h2 class="subtitulo mt-8">¿Qué puede hacer cada rol?</h2>
+<div class="tarjeta p-0"><div class="tabla-contenedor"><table class="tabla text-xs">
+  <thead><tr><th>Capacidad</th>{% for k, n in ROLES.items() %}<th class="text-center">{{ n }}</th>{% endfor %}</tr></thead>
+  <tbody>{% for p, t in [("usuarios","Administrar usuarios y roles"),("auditoria","Consultar auditoría"),("activos","Registrar y editar activos"),("activos_ver","Ver activos"),("registrar","Registrar vulnerabilidades"),("gestionar","Validar, clasificar, priorizar, asignar, verificar y cerrar"),("atender","Atender casos asignados"),("ver_todo","Ver todos los casos"),("reportes","Reportes y CSV")] %}
+    <tr><td>{{ t }}</td>{% for k in ROLES %}<td class="text-center">{{ '✔' if p in permisos[k] or (p == 'activos_ver' and 'activos' in permisos[k]) else '' }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div></div>
+<p class="mt-2 text-xs text-slate-500">El administrador controla todo el sistema pero no atiende casos: así quien verifica una solución nunca es quien la hizo.</p>
+{% endblock %}

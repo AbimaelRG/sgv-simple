@@ -1,0 +1,15 @@
+rules_version = '2';
+
+// Reglas de seguridad de Firebase Storage (evidencias y documentos).
+//
+// Los archivos son privados: el navegador no puede leerlos ni subirlos directamente.
+// El backend (Admin SDK, no sujeto a estas reglas) valida el tipo, el tamaño y el
+// permiso del usuario, y entrega cada archivo solo a quien puede ver el caso
+// (ruta /evidencias/<id>).
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

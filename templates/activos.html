@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import nivel, estado, vacio, icono %}
+{% block titulo %}Activos{% endblock %}
+{% block contenido %}
+<div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+  <h1 class="titulo-pagina mb-0">Activos tecnológicos</h1>
+  {% if puede("activos") %}<a class="btn btn-primario" href="{{ url_for('activo_nuevo') }}">{{ icono("mas", "h-4 w-4") }}Nuevo activo</a>{% endif %}
+</div>
+<div class="tarjeta mb-4"><label class="etiqueta-campo" for="buscar">Buscar</label>
+  <input class="campo" id="buscar" type="search" placeholder="Nombre, tipo, responsable…" data-filtra="tabla-activos"></div>
+<div class="tarjeta p-0">
+{% if activos %}
+<div class="tabla-contenedor"><table class="tabla" id="tabla-activos">
+  <thead><tr><th>Nombre</th><th>Tipo</th><th>IP</th><th>Ubicación</th><th>Responsable</th><th>Criticidad</th><th>Estado</th><th>Casos abiertos</th>{% if puede("activos") %}<th></th>{% endif %}</tr></thead>
+  <tbody>{% for a in activos %}<tr><td class="font-medium">{{ a.nombre }}</td><td>{{ a.tipo }}</td><td>{{ a.ip or '—' }}</td><td>{{ a.ubicacion or '—' }}</td><td>{{ a.responsable or '—' }}</td><td>{{ nivel(a.criticidad) }}</td><td>{{ estado(a.estado) }}</td><td>{{ abiertas.get(a.id, 0) }}</td>
+    {% if puede("activos") %}<td><a class="enlace" href="{{ url_for('activo_editar', aid=a.id) }}">Editar</a></td>{% endif %}</tr>{% endfor %}</tbody></table></div>
+{% else %}{{ vacio("Todavía no hay activos.") }}{% endif %}
+</div>
+{% endblock %}

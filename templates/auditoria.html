@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_macros.html" import estado, vacio %}
+{% block titulo %}Auditoría{% endblock %}
+{% block contenido %}
+<h1 class="titulo-pagina">Auditoría</h1>
+<p class="mb-4 text-sm text-slate-600">Bitácora de solo lectura: ninguna pantalla permite editarla ni borrarla.</p>
+<form method="get" class="tarjeta mb-4 flex flex-wrap items-end gap-3">
+  <div class="min-w-48 flex-1"><label class="etiqueta-campo" for="texto">Buscar</label><input class="campo" id="texto" name="texto" value="{{ q }}" placeholder="Usuario, acción o descripción"></div>
+  <button class="btn btn-primario">Filtrar</button><a class="btn btn-secundario" href="{{ url_for('auditoria') }}">Limpiar</a></form>
+<div class="tarjeta p-0">{% if filas %}<div class="tabla-contenedor"><table class="tabla">
+  <thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Módulo</th><th>Registro</th><th>Resultado</th><th>Detalle</th></tr></thead>
+  <tbody>{% for r in filas %}<tr><td class="whitespace-nowrap">{{ r.fecha_hora|fecha_hora }}</td><td>{{ r.usuario }}</td><td>{{ r.accion }}</td><td>{{ r.modulo }}</td><td class="text-xs">{{ r.id_registro or '—' }}</td><td>{{ estado(r.resultado) }}</td><td class="max-w-xs text-xs text-slate-600">{{ r.detalle }}</td></tr>{% endfor %}</tbody></table></div>
+{% else %}{{ vacio("No hay eventos.") }}{% endif %}</div>
+{% endblock %}

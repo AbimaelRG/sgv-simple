@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block titulo %}Mi perfil{% endblock %}
+{% block contenido %}
+<h1 class="titulo-pagina">Mi perfil</h1>
+<div class="tarjeta max-w-xl"><dl class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+  <div><dt class="dt">Nombre</dt><dd>{{ usuario.nombre }}</dd></div>
+  <div><dt class="dt">Correo</dt><dd>{{ usuario.correo }}</dd></div>
+  <div><dt class="dt">Departamento</dt><dd>{{ usuario.departamento or '—' }}</dd></div>
+  <div><dt class="dt">Rol</dt><dd>{{ ROLES[usuario.rol] }}</dd></div>
+  <div><dt class="dt">Último acceso</dt><dd>{{ usuario.ultimo_acceso|fecha_hora }}</dd></div>
+</dl></div>
+{% endblock %}

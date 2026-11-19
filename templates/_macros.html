@@ -1,0 +1,67 @@
+{# Componentes reutilizables: iconos, etiquetas y campos de formulario #}
+{% macro icono(nombre, clase="h-5 w-5") -%}
+{%- set rutas = {
+ "panel": "M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z",
+ "activos": "M4 6h16M4 12h16M4 18h16M7 3v6M17 9v6M12 15v6",
+ "vuln": "M12 3l9 16H3L12 3zm0 6v4m0 3v.01",
+ "clasif": "M4 6h16M7 12h10M10 18h4",
+ "asig": "M16 11a4 4 0 10-8 0 4 4 0 008 0zM4 21a8 8 0 0116 0",
+ "segui": "M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z",
+ "verif": "M5 13l4 4L19 7",
+ "alerta": "M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 11-6 0",
+ "reporte": "M9 17v-6m4 6V7m4 10v-3M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z",
+ "audit": "M9 12l2 2 4-4m5.6-1A12 12 0 0112 3a12 12 0 01-8.6 3A12 12 0 003 12c0 5.2 3.3 9.6 9 11 5.7-1.4 9-5.8 9-11 0-1.1-.1-2.1-.4-3z",
+ "usuarios": "M17 20h5v-2a4 4 0 00-3-3.9M9 11a4 4 0 100-8 4 4 0 000 8zm8-1a3 3 0 100-6M2 20v-2a4 4 0 014-4h6a4 4 0 014 4v2",
+ "perfil": "M5.1 17.8A9 9 0 1118.9 17.8M12 12a3 3 0 100-6 3 3 0 000 6z",
+ "salir": "M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1",
+ "menu": "M4 6h16M4 12h16M4 18h16",
+ "mas": "M12 5v14M5 12h14",
+ "descargar": "M12 4v12m0 0l-4-4m4 4l4-4M4 20h16",
+ "escudo": "M12 3l8 3v6c0 5-3.4 8.4-8 9-4.6-.6-8-4-8-9V6l8-3z"
+} -%}
+<svg class="{{ clase }} shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ rutas[nombre] }}"/></svg>
+{%- endmacro %}
+
+{# Etiqueta de color para severidad / prioridad / criticidad (Baja..Crítica) #}
+{% macro nivel(valor) -%}
+{%- set k = {"Crítica":"critica","Alta":"alta","Media":"media","Baja":"baja","Crítico":"critica","Alto":"alta","Medio":"media","Bajo":"baja"} -%}
+{%- if valor %}<span class="etiqueta nivel-{{ k.get(valor, 'baja') }}">{{ valor }}</span>{% else %}<span class="text-slate-400">—</span>{% endif -%}
+{%- endmacro %}
+
+{# Etiqueta para estados #}
+{% macro estado(valor) -%}
+{%- set k = {"Registrada":"gris","Validada":"gris","Clasificada":"azul","Priorizada":"azul","Asignada":"azul",
+  "En atención":"ambar","Pendiente de verificación":"violeta","Resuelta":"verde","Cerrada":"verde","Reabierta":"rojo",
+  "Activo":"verde","Inactivo":"gris","Vigente":"azul","Completada":"verde","Reasignada":"gris",
+  "Aprobada":"verde","Rechazada":"rojo","Nueva":"ambar","Leída":"gris","Correcto":"verde","Denegado":"rojo","Error":"rojo"} -%}
+<span class="etiqueta estado-{{ k.get(valor, 'gris') }}">{{ valor }}</span>
+{%- endmacro %}
+
+{% macro campo(nombre, etiqueta, valor="", tipo="text", requerido=False, ayuda="", extra="") -%}
+<div>
+  <label class="etiqueta-campo" for="{{ nombre }}">{{ etiqueta }}{% if requerido %} <span class="text-red-600" aria-hidden="true">*</span>{% endif %}</label>
+  <input class="campo" id="{{ nombre }}" name="{{ nombre }}" type="{{ tipo }}" value="{{ valor if valor is not none else '' }}"
+         {% if requerido %}required{% endif %} {{ extra|safe }}>
+  {% if ayuda %}<p class="ayuda">{{ ayuda }}</p>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro seleccion(nombre, etiqueta, opciones, valor="", requerido=False, vacio="", ayuda="") -%}
+<div>
+  <label class="etiqueta-campo" for="{{ nombre }}">{{ etiqueta }}{% if requerido %} <span class="text-red-600" aria-hidden="true">*</span>{% endif %}</label>
+  <select class="campo" id="{{ nombre }}" name="{{ nombre }}" {% if requerido %}required{% endif %}>
+    {% if vacio %}<option value="">{{ vacio }}</option>{% endif %}
+    {% for o in opciones %}
+      {% set v = o[0] if o is not string else o %}{% set t = o[1] if o is not string else o %}
+      <option value="{{ v }}" {{ 'selected' if v == valor }}>{{ t }}</option>
+    {% endfor %}
+  </select>
+  {% if ayuda %}<p class="ayuda">{{ ayuda }}</p>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro vacio(texto) -%}
+<div class="py-10 text-center text-sm text-slate-500">{{ texto }}</div>
+{%- endmacro %}
+
+{% macro csrf_campo() -%}<input type="hidden" name="csrf" value="{{ csrf }}">{%- endmacro %}
