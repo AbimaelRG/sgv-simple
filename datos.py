@@ -33,8 +33,11 @@ def _iniciar_firebase():
     from firebase_admin import credentials
     if not firebase_admin._apps:
         ruta = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-        # Con archivo de clave (en tu PC) o con la cuenta del servicio (en Cloud Run)
-        cred = credentials.Certificate(ruta) if ruta else credentials.ApplicationDefault()
+        if not ruta or not os.path.exists(ruta):
+            secreto_render = "/etc/secrets/clave-firebase.json"
+            if os.path.exists(secreto_render):
+                ruta = secreto_render
+        cred = credentials.Certificate(ruta) if (ruta and os.path.exists(ruta)) else credentials.ApplicationDefault()
         firebase_admin.initialize_app(cred, {"storageBucket": STORAGE_BUCKET} if STORAGE_BUCKET else None)
 
 
