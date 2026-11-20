@@ -530,16 +530,23 @@ def vuln_detalle(vid):
 @app.post("/vulnerabilidades/<vid>/accion/<accion>")
 @requiere()
 def vuln_accion(vid, accion):
-    """Única puerta para cambiar el estado: valida permiso, estado de origen y datos."""
-    v = caso(vid)
+    etiqueta = aplicar_accion(caso(vid), g.usuario, accion, request.form)
+    flash(f"Listo: {etiqueta}.", "ok")
+    return redirect(url_for("vuln_detalle", vid=vid))
+
+
+def aplicar_accion(v, u, accion, f):
+    """Única puerta para cambiar el estado: valida permiso, estado de origen y datos.
+    La usan la pantalla (vuln_accion) y el script de datos de ejemplo."""
+    vid = v["id"]
     if accion not in reglas.ACCIONES:
-        abort(404)
+        raise Error("Acción desconocida.")
     origen, destino, permiso, etiqueta = reglas.ACCIONES[accion]
-    if accion not in reglas.acciones_disponibles(v, g.usuario):
-        if not reglas.puede(g.usuario["rol"], permiso) or (permiso == "atender" and v.get("id_tecnico") != g.usuario["id"]):
+    if accion not in reglas.acciones_disponibles(v, u):
+        if not reglas.puede(u["rol"], permiso) or (permiso == "atender" and v.get("id_tecnico") != u["id"]):
             raise SinPermiso(f"{accion} en {vid}")
         raise Error(f"«{etiqueta}» no está disponible cuando el caso está «{v['estado']}».")
-    f, cambios = request.form, {}
+    cambios = {}
     obs = texto(f, "observaciones", "Las observaciones", False, maximo=1000)
     actividad = etiqueta
 
@@ -561,7 +568,7 @@ def vuln_accion(vid, accion):
         datos.crear("evaluaciones", {"id_vulnerabilidad": vid, "cvss": v.get("cvss"), "criticidad_activo": activo["criticidad"],
                                      "impacto_empresarial": impacto, "probabilidad": prob, "puntaje": puntaje,
                                      "prioridad_sugerida": sugerida, "prioridad": None, "justificacion": "",
-                                     "evaluado_por": g.usuario["nombre"], "fecha": ahora()}, datos.nuevo_id("EVA"))
+                                     "evaluado_por": u["nombre"], "fecha": ahora()}, datos.nuevo_id("EVA"))
         actividad = f"Clasificado: impacto {impacto}, probabilidad {prob} (sugerida: {sugerida})"
 
     elif accion == "priorizar":
@@ -583,7 +590,7 @@ def vuln_accion(vid, accion):
             datos.actualizar("asignaciones", a["id"], {"estado": "Reasignada"})
         datos.crear("asignaciones", {"id_vulnerabilidad": vid, "id_tecnico": t["id"], "tecnico": t["nombre"],
                                      "fecha": ahora(), "fecha_limite": limite, "estado": "Vigente",
-                                     "observaciones": obs, "asignado_por": g.usuario["nombre"]}, datos.nuevo_id("ASG"))
+                                     "observaciones": obs, "asignado_por": u["nombre"]}, datos.nuevo_id("ASG"))
         cambios.update(id_tecnico=t["id"], tecnico_nombre=t["nombre"], fecha_limite=limite)
         if v["estado"] == "Priorizada":
             cambios["estado"] = "Asignada"
@@ -599,7 +606,7 @@ def vuln_accion(vid, accion):
     elif accion in ("aprobar", "rechazar"):
         if accion == "rechazar" and not obs:
             raise Error("Explica por qué la solución no es correcta.")
-        datos.crear("verificaciones", {"id_vulnerabilidad": vid, "verificado_por": g.usuario["nombre"], "fecha": ahora(),
+        datos.crear("verificaciones", {"id_vulnerabilidad": vid, "verificado_por": u["nombre"], "fecha": ahora(),
                                        "resultado": "Aprobada" if accion == "aprobar" else "Rechazada",
                                        "observaciones": obs, "fecha_cierre": None}, datos.nuevo_id("VER"))
         if accion == "aprobar":
@@ -626,11 +633,10 @@ def vuln_accion(vid, accion):
     if cambios:
         datos.actualizar("vulnerabilidades", vid, cambios)
     nuevo_estado = cambios.get("estado", v["estado"])
-    seguimiento(vid, g.usuario, actividad, obs, nuevo_estado)
+    seguimiento(vid, u, actividad, obs, nuevo_estado)
     detalle = f"{v['estado']} → {nuevo_estado}" if nuevo_estado != v["estado"] else actividad[:200]
-    registrar(g.usuario, "Cambio de estado" if nuevo_estado != v["estado"] else etiqueta, "Vulnerabilidades", vid, detalle=detalle)
-    flash(f"Listo: {etiqueta}.", "ok")
-    return redirect(url_for("vuln_detalle", vid=vid))
+    registrar(u, "Cambio de estado" if nuevo_estado != v["estado"] else etiqueta, "Vulnerabilidades", vid, detalle=detalle)
+    return etiqueta
 
 
 # ============================================================ evidencias

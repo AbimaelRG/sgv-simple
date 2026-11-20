@@ -3,7 +3,7 @@
   MODO_LOCAL=1 -> todo en el archivo datos_local.json (para probar sin Firebase)
   MODO_LOCAL=0 -> Cloud Firestore y Firebase Storage
 
-Funciones: listar, obtener, crear, actualizar, nuevo_id, guardar_archivo, leer_archivo, borrar_archivo.
+Funciones: listar, obtener, crear, actualizar, eliminar, nuevo_id, guardar_archivo, leer_archivo, borrar_archivo.
 """
 import json
 import os
@@ -110,6 +110,17 @@ def actualizar(coleccion, doc_id, cambios):
             _escribir(todo)
     else:
         _fs.collection(coleccion).document(doc_id).update(cambios)
+
+
+def eliminar(coleccion, doc_id):
+    """Solo lo usa el script de datos de ejemplo (--limpiar). La pantalla nunca borra registros."""
+    if MODO_LOCAL:
+        with _candado:
+            todo = _leer()
+            todo.get(coleccion, {}).pop(doc_id, None)
+            _escribir(todo)
+    else:
+        _fs.collection(coleccion).document(doc_id).delete()
 
 
 # ---------------------------------------------------------------- archivos

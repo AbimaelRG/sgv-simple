@@ -128,3 +128,16 @@ Usuarios y 5 roles (el administrador controla todo pero no atiende casos) · act
 
 **Cambiar estilos:** `static/app.css` ya está compilado. Solo si modificas las plantillas: `npm i tailwindcss@3.4.17` y
 `npx tailwindcss -c tailwind.config.js -i estilos/entrada.css -o static/app.css --minify`.
+
+## Llenar el sistema con datos de ejemplo
+
+Para entender cómo funciona (con casos en todos los estados, alertas de vencimiento, historial y auditoría):
+
+```
+python cargar_ejemplos.py            # crea 6 usuarios, 8 activos y 13 vulnerabilidades marcados [PRUEBA]
+python cargar_ejemplos.py --limpiar  # borra solo lo que creó este script
+```
+
+- Para cargarlos en Firebase: en tu PC, con `MODO_LOCAL=0` y `clave-firebase.json` en esta carpeta (igual que con `crear_admin.py`). El sitio en línea usa el mismo proyecto Firebase, así que verá los datos de inmediato.
+- Te pide una contraseña (mínimo 8 caracteres) que se usa para todos los usuarios de ejemplo. Los correos son `admin`, `responsable`, `tecnico1`, `tecnico2`, `auditor` y `gerencia`, todos con `@ejemplo.sgv`.
+- La bitácora de auditoría no se borra con `--limpiar` (es un registro histórico).
